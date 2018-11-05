@@ -1,0 +1,441 @@
+---
+title: '550 Assignment #2'
+author: "Brody Vogel"
+date: "2/12/2018"
+output: pdf_document
+---
+
+Worked with: Jinghao Yan
+
+# Problem 1
+
+We can prove this by contradiction.
+
+Recall, first, that in an undirected graph, $(v, u) <==> (u, v)$.
+
+Assume that a depth first search (DFS) of an undirected graph, $G$, encounters a cross edge that we'll call $(v, u)$. 
+
+By the definition of a cross edge, this means that $(v, u)$ connects nodes $v$ and $u$ that have no ancestral relationship in the DFS tree produced by this depth first search. 
+
+Because DFS checks every neighbor of the node it is currently exploring along a path, the assumption that cross edge $(u, v)$ is encountered in the execution of DFS on $G$ implies that, at a point in the execution of DFS when neither $u$ nor $v$ had been encountered (neither had a parent node), one of two things occurred:
+
+- (A) Node $u$ was encountered first via a path through a parent node that was not $v$, and $v$ was not found in the following visit to every neighbor of $u$. ($(u, v)$ was not added to the DFS tree). 
+
+- (B) Node $v$ was encountered first via a path through a parent node that was not $u$, and $u$ was not found in the following visit to every neighbor of $v$. ($(v, u)$ was not added to the DFS tree). 
+
+If both of these things were false, then there would be an ancestral relationship between nodes $u$ and $v$, and so $(u, v)$ would not be a cross edge. 
+
+But the fact that $G$ is an undirected graph, $(u, v)$ is a cross edge, and one of (A) or (B) must be true implies a contradiction. If $(u, v)$ were truly an edge in $G$, then if $u$ is encountered first, the pass through the neighbors of $u$ will encounter $v$ and add $(u, v)$ to the DFS tree; or, if $v$ is encountered first, the pass through the neighbors of $v$ will encounter $u$ and add $(v, u)$ to the DFS tree. Because $G$ is an undirected graph, $(v, u) <==> (u, v)$, and so this edge will always be in the DFS tree, if it were truly an edge in $G$. 
+
+Thus, if a cross edge is encountered while running DFS on an undirected graph, $G$, it must be in the DFS tree for $G$, which is a contradiciton. So, any DFS of $G$ will never encounter a cross edge. 
+
+
+# Problem 2
+
+*pseudocode for part 1, assuming the algorithm merges and sorts non-empty lists in descending order*
+
+\vspace{12pt}
+
+SortKLists():
+
+result <- array of size n &nbsp; &nbsp; &nbsp; &nbsp; $O(1)$
+
+original <- set of pairs containing elements and the original list from which they came &nbsp; &nbsp; &nbsp; &nbsp; $O(1)$
+
+holder <- array of size k containing the largest element from each list, [a[1], b[1], ... , k[1]] &nbsp; &nbsp; &nbsp; &nbsp; $O(1)$
+
+remove a[1], b[1], ... , k[1] from their original arrays &nbsp; &nbsp; &nbsp; &nbsp; $O(1)$
+
+H <- Build-Max-Heap(holder) &nbsp; &nbsp; &nbsp; &nbsp; $O(k)$
+
+for i = 1 to n: &nbsp; &nbsp; &nbsp; &nbsp; $O(n)$
+
+- z <- Extract-Max(H) &nbsp; &nbsp; &nbsp; &nbsp; $O(logk)$
+  
+- result[i] <- z &nbsp; &nbsp; &nbsp; &nbsp; $O(1)$
+  
+- if original[z] not empty: &nbsp; &nbsp; &nbsp; &nbsp; $O(1)$
+  
+      x <- original[z][1] &nbsp; &nbsp; &nbsp; &nbsp; $O(1)$
+  
+      Insert(H, x) &nbsp; &nbsp; &nbsp; &nbsp; $O(logk)$
+      
+      Up-Heapify(x) &nbsp; &nbsp; &nbsp; &nbsp; $O(logk)$   
+      
+      remove original[z][1] from original[z] &nbsp; &nbsp; &nbsp; &nbsp; $O(1)$
+    
+return result &nbsp; &nbsp; &nbsp; &nbsp; $O(1)$
+
+\vspace{12pt}
+
+In the first section of the algorithm, two arrays and a set are initialized: one empty array, $result$, of size $n$ for the result of our sorting; one array, $holder$, of size $k$ containing the removed, largest element from each of the $k$ sorted lists; and a set, $original$, for maintaing a memory of which original list each element was taken from. Each of these operations takes constant time.
+
+In the next section, we initialize a Max-Heap, $H$, from $holder$; so $H$ is a Max-Heap composed of the largest elements from the $k$ lists. This takes $O(k)$ time, from the definition of Build-Max-Heap().
+
+We then enter an outer loop that runs until we've processed each of the $n$ total elements from the $k$ lists. In the outer loop, we extract the largest element, $z$, from $H$. This takes $O(logk)$ time, by the definition of Extract-Max(). We then add $z$ to the back of $result$, taking $O(1)$ time. We then check in $O(1)$ time if the list from which $z$ originally came ($original[z]$) is empty. If it is not, we enter the inner loop.
+
+In the inner loop, we remove and insert the next largest element from the list from which $z$ came into $H$, which by the definition of Insert() we know to take $O(logk)$ time. We then run Up-Heapify(x) to restore the Max-Heap property and so allow us to move back to the top of the outer loop. By definition, this too takes $O(logk)$ time. 
+
+Once the outer loop has finished, we know H is empty and so we've finished; the algorithm returns $result$. 
+
+Thus, we ensure that each of the $n$ elements from the $k$ lists is correctly ordered in $result$, and so we've used heaps to merge $k$ sorted lists. In sum, then, we'll call Build-Max-Heap() exactly once, Extract-Max() exactly $n$ times, and Insert() and Up-Heapify() strictly less than $n$ times. So, ignoring the constants, we have a runtime of $O(k) + n \times (O(logk) + O(logk) + O(logk))$ <==> $O(k + 3nlogk))$. Asymptotically, we know this to be equivalent to $O(nlogk)$, because $n \geq k$. 
+
+\vspace{12pt}
+
+*proof of correctness*
+
+\vspace{12pt}
+
+We can prove the correctness of this algorithm by contradiction.
+
+Let's say it does *not* sort correctly. That means that there are values in $result$ that are not in descending order. This means that, at some point, Extract-Max(H) was callled, and one of two things happened:
+
+- (A) Extract-Max(H) did not return the maximum value in H.
+
+- (B) Of the elements not yet added to $result$, the largest was not in the Heap, $H$, when Extract-Max(H) was called.
+
+By the definition of a Heap, (A) cannot be true; but (B) cannot be true either. For, in the algorithm, the only way for an element to get into $H$ is by being the largest remaining element in its original sorted list. If, then, the largest remaining element not in $result$ were ever not in $H$, then the inputted lists were not sorted, which we know by the description of the problem to be false. Thus, if the algorithm does not work, one of (A) or (B) must be true, but both are false, and so assuming the algorihtm sorts incorrectly leads to a contradiction. Hence, the algorithm correctly merges and sorts $k$ sorted lists. 
+
+\vspace{12pt}
+
+*pseudocode for part 2, assuming it sorts a non-empty list in descending order*
+
+\vspace{12pt}
+
+KSort(*k*-close to sorted list, $L$):
+
+result <- array of size n &nbsp; &nbsp; &nbsp; &nbsp; $O(1)$
+
+H <- Build-Max-Heap(L[1:k+1]) &nbsp; &nbsp; &nbsp; &nbsp; $O(k+1)$
+
+for i = 1 to n: &nbsp; &nbsp; &nbsp; &nbsp; $O(n)$
+
+- z <- Extract-Max(H) &nbsp; &nbsp; &nbsp; &nbsp; $O(log(k+1))$ 
+
+- result[1] <- z &nbsp; &nbsp; &nbsp; &nbsp; $O(1)$
+
+- if L not empty: &nbsp; &nbsp; &nbsp; &nbsp; $O(1)$
+
+  - x <- L[i] &nbsp; &nbsp; &nbsp; &nbsp; $O(1)$
+
+  - Insert(H, x) &nbsp; &nbsp; &nbsp; &nbsp; $O(log(k+1))$
+
+  - Up-Heapify(H) &nbsp; &nbsp; &nbsp; &nbsp; $O(log(k+1))$ 
+
+return result &nbsp; &nbsp; &nbsp; &nbsp; $O(1)$
+
+
+In the first section of the code, one empty array, $result$, of size $n$ is initialized for the result of our sorting. This takes $O(1)$ time.
+
+In the next section, we initialize a Max-Heap, $H$, from the first $k + 1$ elements of $L$. This takes $O(k+1)$ time, from the definition of Build-Max-Heap(). We then call Extract-Max(H) to get the largest element from $H$, and add it to the front of $result$. This takes $O(log(k+1))$ and $O(1)$ time, respectively. 
+
+The first part of the algorithm's loop gets the largest element from $H$ with a call to Extract-Max(H) and adds that to position $i$ in $L$. The next condition checks if there are still elements in $L$; if there are, the algorithm gets and adds the next element of $L$ to the heap in $O(1) + O(log(k+1))$ time. It then calls Up-Heapify(H) to regain the Max-Heap Property, all in $2O(1) + 2O(log(k+1)$ time.
+
+Once we've made it through $L$, the algorithm keeps running on the $k$ remaining elements in $H$, putting them at the end of $result$. After this finishes, it retuns $result$, the correctly-sorted list. 
+
+Again ignoring the constants, we make less than $n$ calls to Insert() and Up-Heapify(), exactly $n$ calls to Extract-Max(), and one call to Build-Max-Heap(). So our runtime is $O(k+1) + 3n(O(log(k+1)))$ <==>  $O(k+1 + 3nlog(k+1))$. Asymptotically, this is equivalent to $O(nlogk)$, because $n \geq k$.
+
+\vspace{12pt}
+
+*proof of correctness*
+
+\vspace{12pt}
+
+(X) We know that, if $L$ is $k$-close to sorted, a $k+1$-sized slice from the head of $L$ will by definition contain the largest element of $L$, since said element cannot be more than $k$ positions from its true index of 1. This element will thus be correctly inserted into the first position of the final, sorted list, by the nature of the algorithm. After this, we have a $k$-close to sorted list of $n-1$ elements, and so the same style of argument tells us that this will result in adding the *second* largest element of $L$ to the second postion in the final list. So on and so forth until the inputted list is empty, in which case Extract-Max(H) correctly finishes the execution of the algorithm for the $k + 1$ smallest values of $L$. 
+
+We can formally prove the correctness of this algorithm, then, by showing that assuming otherwise leads to a contradiciton. (Nearly identical to what was done in part one).
+
+Again, let's say the algorithm does *not* sort correctly. This means that there are values in $result$ that are not in descending order. Once more, this means that, at some point, Extract-Max(H) was callled, and one of two things happened:
+
+- (A) Extract-Max(H) did not return the maximum value in H.
+
+- (B) Of the elements not yet added to $result$, the largest was not in the Heap, H, when Extract-Max(H) was called.
+
+By the definition of a Heap, (A) still cannot be true; but (B) cannot be true either. For, in the algorithm, the only way for an element to get into $H$ is by being at the front of the inputted k-close to sorted list. And, by (X), we know that a heap of size $k + 1$ will always contain the largest remaining element of a k-close to sorted list not in $result$. If, then, the largest remaining element not in $result$ were ever not in $H$, then the inputted lists were not k-close to sorted, which we know by the description of the problem to be false. Thus, if the algorithm does not work, one of (A) or (B) must be true, but both are false, and so assuming the algorihtm sorts incorrectly leads to a contradiction. Hence, the algorithm correctly sorts a k-close to sorted list. 
+
+# Problem 3
+
+*pseudocode*
+
+\vspace{12pt}
+
+LongestPath(DAG $G$):
+
+order <- empty array of size n &nbsp; &nbsp; &nbsp; &nbsp; $O(1)$
+
+encountered <- array of size n, encountered[s] = FALSE $\forall$ $v$ $\epsilon$ $V$ &nbsp; &nbsp; &nbsp; &nbsp; $O(1)$
+
+Function HELP(node v):
+
+- for (v, u) $\epsilon$ E: &nbsp; &nbsp; &nbsp; &nbsp; $O(E)$
+
+  - if encountered[u] == FALSE: &nbsp; &nbsp; &nbsp; &nbsp; $O(1)$
+  
+    - HELP(u) &nbsp; &nbsp; &nbsp; &nbsp; $O(1)$
+    
+- encountered[v] <- TRUE &nbsp; &nbsp; &nbsp; &nbsp; $O(1)$
+    
+- add v to next empty spot in order &nbsp; &nbsp; &nbsp; &nbsp; $O(1)$
+
+for v in V: &nbsp; &nbsp; &nbsp; &nbsp; $O(V)$
+
+- if encountered[v] == FALSE: &nbsp; &nbsp; &nbsp; &nbsp; $O(1)$
+
+  - HELP(v) &nbsp; &nbsp; &nbsp; &nbsp; $O(1)$
+
+order <- reversed(order) &nbsp; &nbsp; &nbsp; &nbsp; $O(1)$
+
+dist[v] <- $-\infty$  $\forall v$  $\epsilon$  $V$ &nbsp; &nbsp; &nbsp; &nbsp; $O(1)$
+
+prev[v] <- Null $\forall v$  $\epsilon$  $V$ &nbsp; &nbsp; &nbsp; &nbsp; $O(1)$
+
+for i = 1 to length(order): &nbsp; &nbsp; &nbsp; &nbsp; $O(V)$
+
+- z <- order[i] &nbsp; &nbsp; &nbsp; &nbsp; $O(1)$
+ 
+- for each (z, v)  $\epsilon$  $E$: &nbsp; &nbsp; &nbsp; &nbsp; $O(E)$
+
+  - if dist[v] < dist[z] + weight(z, v): &nbsp; &nbsp; &nbsp; &nbsp; $O(1)$
+  
+    - if dist[z] != $-\infty$: &nbsp; &nbsp; &nbsp; &nbsp; $O(1)$
+    
+      - prev[v] <- z &nbsp; &nbsp; &nbsp; &nbsp; $O(1)$
+    
+      - dist[v] <- dist[z] + weight(z, v) &nbsp; &nbsp; &nbsp; &nbsp; $O(1)$
+      
+    - else:
+      
+      - prev[v] <- z &nbsp; &nbsp; &nbsp; &nbsp; $O(1)$
+      
+      - dist[v] <- weight(z, v) &nbsp; &nbsp; &nbsp; &nbsp; $O(1)$
+      
+endNode <- max(dist) &nbsp; &nbsp; &nbsp; &nbsp; $O(1)$
+    
+return Longest Path by stepping backwards through prev, from endNode &nbsp; &nbsp; &nbsp; &nbsp; $O(1)$
+
+\vspace{12pt}
+
+To solve this problem correctly, we need a topological sorting of our DAG, because we need to know the order in which to search through the graph, $G$, for the longest path. The first part of the algorithm tries to complete this task using a modified Depth First Search. It first initializes two empty arrays, both of size $n$: $order$ will hold the final topological sorting of the DAG; and $encountered$ - initialized to be FALSE $\forall$ $v$ $\epsilon$ $V$ - keeps track of the nodes that we've seen while running the algorithm. Both of these initializations take constant time.
+
+The algorithm then moves into the building of the topological sorting by creating a helper function, HELP(node $v$). The function HELP($v$) runs through each neighbor - call it $u$ - of $v$ and checks to see if $u$ has been seen (if $encountered[u] == FALSE$). If it has not, HELP() recursively calls itself on $u$. Then, once its finished with the recursive calls, HELP($v$) switches $encountered[v]$ to TRUE and adds $v$ to the next empty opening in $order$. Everything runs in $O(1)$ time, so the fact that HELP() sees every edge in $E$ exactly once means the runtime inside the function is $O(E)$. 
+
+Next, the algorithm runs through each node, $v$, in $V$ and, if $encountered[v] == FALSE$, calls HELP($v$). This will run through every node in $V$ exactly once and so has a runtime of $O(V)$. 
+
+The above process will produce the correct topological sorting of $G$, but in reverse order; so we call reverse(order) to make things right, in $O(1)$ time. 
+
+Now the algorithm gets to the part that actually looks for the longest path. First, the algorithm initializes two arrays: one, $dist$, that contains the longest possible distance of a path ending at each node in $G$ - initializing $dist[v]$ to be $-\infty$ for every node in $V$; and the second, $prev$, which holds the preceding node of each following node in the longest path to that latter node. The initializations take constant time. 
+
+The following loop of the algorithm runs from the first element in $order$ to the last. In each pass, it takes the next element, $z$, of $order$ (the next element from the topological sorting), runs through each of $z$'s neighbors, $v$, and checks if the combined, weighted distance of the longest found path to $z$ and the edge connecting $z$ to $v$ is larger than $dist[v]$. If it is greater, the algorithm checks whether $dist[z]$ is still $-\infty$; if it is, $prev[v]$ is updated to $z$, and $dist[v]$ becomes $weight(z, v)$ (we don't add $dist[z]$ to $dist[v]$ in this case because $-\infty + anything$ is still $-\infty$); if it is greater than $-\infty$, $prev[v]$ is updated to $z$, and $dist[v]$ becomes $dist[z] + weight(z, v)$. Each of these checks and assignments takes constant time. The loop, though, goes through every node, and each time through at most $E$ edges, in $G$; it therefore takes $O(E(V))$ time. 
+
+After the loop has made it through each element of $order$, it finds the longest path by calling $endNode = max(dist)$ in $O(1)$ time. The longest path, then, can be found by stepping backwards through $prev$ from endNode to its source. 
+
+The runtime of the algorithm, without constants, is: $O(V) + O(E) + O(E(V))$ <==> $O(V + E + E(V))$. Asymptotically, we know this to be equivalent to $O(E \times V)$.
+
+\vspace{12pt}
+
+*proof of correctness*
+
+\vspace{12pt}
+
+Again at a high level, we intuitively know this algorithm to be correct: Because we loop through the topological sorting of DFS($G$), we know we'll pass, at some point, through the longest-path in the graph; and, from the loop, we essentially choose, step-by-step, the longest path from one node to the next. We can formally prove the correctness of the algorithm, though, by contradiction.
+
+Assume that the algorithm does *not* find the longest path in a DAG. That means there is a path from some node - call it $x$ - to another node - call it $y$ - that is longer than the path returned by the algorithm. Now, this means the algorithm incorrectly calculated $dist[y]$; for, if it calculated it correctly, $max(dist)$ would've returned $dist[y]$ and the algorithm would be correct. If $dist[y]$ were incorrect, then, the longest path, $p = <x, v_1, v_2, ... , y>$, from $x$ to $y$ was not encountered by the algorithm. But we know that the algorithm explores and stores the longest path *ending* at every node in $G$, and so each edge, $(x, v_1), (v_1, v_2), ... , (v_n, y)$, along the longest path starting at $x$ and *ending* at $y$ was encountered and stored accordingly. Thus, the path from $x$ to $y$ was encountered by the algorithm, and so $dist[y]$ must've been correctly calculated. So assuming the algorithm does not work correctly leads to the position that the $dist$ array both is and is *not* calculated correctly, which is a contradiciton. So the algorithm correctly finds the longest path in a DAG. 
+
+# Problem 4
+
+*pseudocode*
+
+\vspace{12pt}
+
+SmallestBottleneck(Graph $G$, source $s$):
+
+b.neck <- array of size n, $\infty$ $\forall v$ $\epsilon$ $V$, b.neck[s] = NULL &nbsp; &nbsp; &nbsp; &nbsp; $O(1)$
+
+prev <= array of size n, NULL $\forall v$ $\epsilon$ $V$ &nbsp; &nbsp; &nbsp; &nbsp; $O(1)$
+
+for i = 1 to n-1: &nbsp; &nbsp; &nbsp; &nbsp; $O(V - 1)$
+
+- u <- V[i] &nbsp; &nbsp; &nbsp; &nbsp; $O(1)$
+
+- for each (u, v) $\epsilon$ E: &nbsp; &nbsp; &nbsp; &nbsp; $O(E)$
+
+  - if prev[v] == NULL: &nbsp; &nbsp; &nbsp; &nbsp; $O(1)$
+  
+    - prev[v] <- u &nbsp; &nbsp; &nbsp; &nbsp; $O(1)$
+
+  - z <- max(b.neck[u], weight(u, v)) &nbsp; &nbsp; &nbsp; &nbsp; $O(1)$
+  
+  - if b.neck[v] > z: &nbsp; &nbsp; &nbsp; &nbsp; $O(1)$
+  
+    - b.neck[v] <- z &nbsp; &nbsp; &nbsp; &nbsp; $O(1)$
+    
+    - prev[v] <- u &nbsp; &nbsp; &nbsp; &nbsp; $O(1)$
+    
+return smallest bottleneck path by stepping backwards through prev and dist &nbsp; &nbsp; &nbsp; &nbsp; $O(1)$
+  
+\vspace{12pt}
+
+The first part of the algorithm initializes two arrays of size $n$: one, $b.neck$, holds the value $\infty$ for all the vertices in $V$ except $b.neck[source, s]$, which is set to $NULL$; the other, $prev$, is the same as in the earlier problems - it holds the previous node in the smallest bottleneck path from $s$ to each $v$ in $V$, all started at $NULL$. This is all done in constant time.
+
+The algorithm then moves to the for loop, which runs from 1 to n-1 (so all the nodes except the last one in an arbitrary ordering, starting with $s$). It then sets the variable $u$ to the node $V[i]$. It next enters the inner loop, where it checks each edge $(u, v)$ in $E$. If $prev[v] = NULL$, $prev[v]$ is set to $u$ (so there aren't any $b.neck[NULL]$ lookups in what's to come). The algorithm then computes $z <- max(b.neck[u], weight(u, v))$. If the current value of $b.neck[v]$ is found to be larger than both the bottlneck of it's potential preceding node, $b.neck[u]$, and the weight of the edge $(u,v)$, we know there is a path with a smaller bottleneck from $s$ to $v$, and so $b.neck[v]$ is set to $z$ and $prev[v]$ to $u$. This runs in a total of $O(V-1(E))$ time, because the outer loop eventually runs through every node in $V$ but one, and the inner loop through every edge in $E$. 
+
+After the algorithm finishes this process for every node, the smallest bottleneck path for any node from the source, $s$, can be found by looking up that node in $dist$ and stepping backwards through $prev$ to $s$. 
+  
+Asymptotically, we see the runtime is dominated by the two loops: $O(V-1(E))$. We know this is equivalent to $O(V \times E)$, so this algorithm determines the smallest bottleneck path from the source, $s$, to all other nodes in at worst $O(V \times E)$ time.
+
+\vspace{12pt}
+
+*proof of correctness*
+
+\vspace{12pt}
+
+This proof is nearly identical to the proof of Dijkstra's presented in class. Once more, at a high level, we intuitively know this algorithm to be correct: Because we handle each node and edge, we essentially choose, step-by-step, the path with the smallest bottleneck from one node to the next. We can formally prove the correctness of the algorithm, though, with induction.
+
+Base Case: $n = 1$
+
+If $V$ is of size 1, the algorithm just trivially uses that single node as the source and outputs $s$ with $b.neck[s] = 0$, which is correct.
+
+Inductive Hypothesis (IH): *Assume the algorithm correctly finds the path with the shortest bottleneck in all cases in which the total number of elements is $\leq$ n*
+
+Case in which number of elements = n + 1:
+
+By (IH), we can assume that, in the case in which the size of $V$ is n + 1, $b.neck[u]$ is correct for all $u$ but possibly the last element, which we'll call $v$ (i.e., it correctly finds the path with the shortest bottleneck from the source, $s$, to $u$  for the first n elements). Now, assume $b.neck[v]$ is incorrect. This means that $prev[v]$ is incorrect, too; that is, there is a path from $s$ to $v$ that has a smaller bottleneck than $s -> ... -> prev[v] -> v$. But, since we know the algorithm encounters every edge in $G$, this is a contradiction. For, if there is a path including another neighbor of $v$ - call it $z$ - such that $s -> ... -> z -> v$ has a smaller bottleneck than $s -> ... -> prev[v] -> v$, the algorithm would've updated $prev[v]$ to $z$ and adjusted $b.neck[v]$ accordingly. Thus, assuming the algorithm does not work correctly for cases in which there are n + 1 elements leads to a contradiction, and so the algorithm has been inductively proved correct. 
+
+# Problem 5
+
+*pseudocode*
+
+\vspace{12pt}
+
+ModDijkstra(Graph $G$, source $s$, max cost $M$):
+
+L <- array of size $M \times V + 2$, composed of stacks, {}, implemented with linked lists &nbsp; &nbsp; &nbsp; &nbsp; $O(1)$
+
+L[i] <- {} for 1, 2,..., MV &nbsp; &nbsp; &nbsp; &nbsp; $O(1)$
+
+L[$\infty$] <- {} &nbsp; &nbsp; &nbsp; &nbsp; $O(1)$
+
+L[0] <- {source, s} &nbsp; &nbsp; &nbsp; &nbsp; $O(1)$
+
+dist <- array of size V, dist[source, s] = 0, dist[v] = $\infty$ $\forall$ other v $\epsilon$ V &nbsp; &nbsp; &nbsp; &nbsp; $O(1)$
+
+prev <- array of size V, prev[v] = NULL $\forall$ v $\epsilon$ V &nbsp; &nbsp; &nbsp; &nbsp; $O(1)$
+
+L[d[v]].push(v) $\forall$ v $\epsilon$ V &nbsp; &nbsp; &nbsp; &nbsp; $O(V)$
+
+For i = 0 to length($L$-1): &nbsp; &nbsp; &nbsp; &nbsp; $O(MV + 2)$
+
+- T <- L[i] &nbsp; &nbsp; &nbsp; &nbsp; $O(1)$
+
+- while T $\neq$ {}: &nbsp; &nbsp; &nbsp; &nbsp; $O(1)$
+
+  - u <- T.pop() &nbsp; &nbsp; &nbsp; &nbsp; $O(1)$
+  
+  - for (u, v) $\epsilon$ G: &nbsp; &nbsp; &nbsp; &nbsp; $O(E)$
+  
+    - if dist[v] > dist[u] + w(u, v): &nbsp; &nbsp; &nbsp; &nbsp; $O(1)$
+    
+      - L[d[v]].remove(v) &nbsp; &nbsp; &nbsp; &nbsp; $O(1)$
+    
+      - dist[v] <- dist[u] + w(u, v) &nbsp; &nbsp; &nbsp; &nbsp; $O(1)$
+      
+      - prev[v] <- u &nbsp; &nbsp; &nbsp; &nbsp; $O(1)$
+    
+      - L[d[v]].push(v) &nbsp; &nbsp; &nbsp; &nbsp; $O(1)$
+      
+return shortest paths by stepping backwards through prev and dist &nbsp; &nbsp; &nbsp; &nbsp; $O(1)$
+
+
+The fist part of the algorithm initializes three arrays. Two are simple and the same as in the previous problems: $dist$, size $V$, holds the distance to each node in the graph from the source, $s$ - $dist[s]$ is initialized as 0, and every other node to $\infty$; the second, $prev$, also of size $V$, holds for each node $v$ the previous node in a shortest path from $s$ to $v$ - all entries in $prev$ are initialized to NULL. The third array, $L$, is of size $M \times V + 2$ (the +2 is for the entries corresponding to $\infty$ and 0). $L$ is an array of stacks, which are implemented using linked lists. Each stack in $L[1], L[2],...,L[M \times V]$ is initialzed as {} (empty). $L[0]$ is set to {s}, and $L[\infty]$ is set to {}. We then push all the nodes that are not $s$ into $L[d[v]]$, which at this point is the same as pushing them all into $L[\infty]$. All the initalizations take constant time, and the calls to push run in $O(1)$ time, because the corresponding stacks are implemented using linked lists. Summed, those calls to push, then, run in $O(V)$ time. 
+
+The next part of the algorithm runs from i = 0 to the length of $L$ minus 1 (MV + 2). It first grabs the first stack from the array and assigns it to the variable $T$. Then, while $T$ is not empty, the algorithm pops the top element of the stack, $u$, which is a node. It then goes through every neighbor, $v$, of $u$ in the graph and checks if $dist[v]$ is larger than $dist[u]$ + the weight of edge $(u, v)$. If it is, $v$ is removed from the stack $L[d[v]]$, has a new distance assigned to it $dist[v] <- dist[u] + w(u, v)$, $prev[v]$ is updated to $u$, and $v$ is finally pushed into the stack $L[dist[u] + w(u, v)] = L[d[v]]$.
+
+Once the algorithm has done this for every stack in $L$ (many of which will be empty), the algorithm finishes. The shortest path to any node can then be found by stepping backwards through $prev$ and $dist$. The runtime is dominated by the loop. The outer loop runs exaclty $MV + 2$ times, and, during the full execution of that loop, each edge will be visited exctly once. Because we used linked lists to implement the stacks in $L$, each stack operation will take $O(1)$ time, and so will not play a large role in the runtime. So, remembering the $V$ previous push operations, in all we get a runtime of $O(V) + O(E + MV)$ <==> $O(E + MV)$. 
+
+\vspace{12pt}
+
+*proof of correctness*
+
+\vspace{12pt}
+
+This proof, too, will look very similar to that for Problem 4. Again, we intuitively know this algorithm to be correct: Because we loop through each node and edge, we essentially choose, step-by-step, the shortest path from one node to the next. We can formally prove the correctness of the algorithm, again, with induction.
+
+Base Case: $n = 1$
+
+If $V$ is of size 1, the algorithm just trivially uses that single node as the source. There is then just one stack for the algorithm to consider, and it outputs $s$ with $dist[s] = 0$ and $prev[s] = NULL$, which is correct.
+
+Inductive Hypothesis (IH): *Assume the algorithm correctly finds the shortest path to each vertex from s in all cases in which the total number of elements is $\leq$ n*
+
+Case in which number of elements = n + 1:
+
+By (IH), we can assume that, in the case in which the size of $V$ is n + 1, $dist[u]$ is correct for all $u$ but possibly the last element, which we'll call $v$ (i.e., it correctly finds the shortest path from the source, $s$, to $u$  for the first n elements). Now, assume $dist[v]$ is incorrect. This means that $prev[v]$ is incorrect, too; that is, there is a path from $s$ to $v$ that is shorter than $s -> ... -> prev[v] -> v$. But, since we know the algorithm checks every edge, $(z, v)$, associated with an in-neighbor of $v$ in $G$, this is a contradiction. For, if there is a path including another neighbor of $v$ - call it $z$ - such that $s -> ... -> z -> v$ is shorter than $s -> ... -> prev[v] -> v$, the algorithm would've placed $v$ in the stack in $L$ corresponding to $L[dist[u] + w(z, v)] = L[d[v]]$, updated $prev[v]$ to $z$, and thus adjusted $dist[v]$ accordingly. Hence, assuming the algorithm does not work correctly for cases in which there are n + 1 elements leads to a contradiction, and so the algorithm has been inductively proved correct. 
+
+# Problem 6
+
+*pseudocode*
+
+\vspace{12pt}
+
+checked <- array of size n, checked[s] <- FALSE $\forall$ $v$ $\epsilon$ $V$ &nbsp; &nbsp; &nbsp; &nbsp; $O(1)$ 
+
+Function Check (source node $s$, neighbor node $v$, float $r$): &nbsp; &nbsp; &nbsp; &nbsp; $O(1)$ 
+
+- if r $\times$ weight(v, s) > 1:  &nbsp; &nbsp; &nbsp; &nbsp; $O(1)$ 
+
+  - output FOUND ONE! &nbsp; &nbsp; &nbsp; &nbsp; $O(1)$ 
+  
+  - BREAK  &nbsp; &nbsp; &nbsp; &nbsp; $O(1)$ 
+  
+- else:
+
+  - checked[v] <- TRUE &nbsp; &nbsp; &nbsp; &nbsp; $O(1)$ 
+  
+  - For (v, z) $\epsilon$ E:  &nbsp; &nbsp; &nbsp; &nbsp; $O(V-1)$ 
+  
+    - if checked[z] == FALSE:  &nbsp; &nbsp; &nbsp; &nbsp; $O(1)$ 
+    
+      - rate1 <- r $\times$ weight(v, z)  &nbsp; &nbsp; &nbsp; &nbsp; $O(1)$ 
+      
+      - Check(s, z, rate1)  &nbsp; &nbsp; &nbsp; &nbsp; $O(1)$ 
+
+For u $\epsilon$ V: &nbsp; &nbsp; &nbsp; &nbsp; $O(V)$ 
+
+- checked <- array of size n, checked[s] <- FALSE $\forall$ $v$ $\epsilon$ $V$ &nbsp; &nbsp; &nbsp; &nbsp; $O(1)$ 
+
+- checked[u] <- TRUE  &nbsp; &nbsp; &nbsp; &nbsp; $O(1)$ 
+
+- For (u, v) $\epsilon$ E:   &nbsp; &nbsp; &nbsp; &nbsp; $O(V-1)$ 
+
+  - rate <- weight(u, v)  &nbsp; &nbsp; &nbsp; &nbsp; $O(1)$ 
+
+  - Check(u, v, rate)  &nbsp; &nbsp; &nbsp; &nbsp; $O(1)$ 
+
+\vspace{12pt}
+
+This problem can be solved by approaching it as a graph. We can think of the exchange rates as edges. There will be exactly V(V-1) edges, assuming any currency can be exchanged with any other. 
+
+The first line of the algorithm initiates an array, $checked$, of size $n$ that holds the value FALSE for each node $v$ in $V$. This takes constant time.
+
+The next chunk of the algorithm defines a funciton, $Check$, that takes as input a source node $s$, a neighboring node $v$, and a floating point decimal $r$. It checks if $r$ $\times$ the weight of $(v, s)$ is greater than 1 and, if it is, outputs "FOUND ONE!" and ends, because this would be the case in which we have detected a risk-free currency exchange; i.e., if we exchange what we've acquired along the path we've built back into the currency we started with, we'll make money. If $r$ $\times$ the weight of $(v, s)$ is instead less than 1, $checked[v]$ is set to TRUE, and the function moves into a loop. For every edge $(v, z)$ in $E$, Check() first makes sure $z$ has not already been run through (to avoid infinite cycles), then initializes a new floating poit decimal $rate1 <- r \times weight(v, z)$; it then recursively calls itself using this new rate, Check(s, z, rate1). This builds a path that starts at $s$ and travels through each other node (currency) in the graph, checking at each step of said path if we can cash out by turning a profit in the currency we started with (taking the edge back to the source). Inside the function, everything takes constant time except the loop through the neighbor node's edges, which takes exactly $O(V-1)$ time, because we know every node (currency) is connected directly to every other node .
+
+Once Check() has been defined, the algorithm loops through each node $u$ in $V$. Inside the loop, $checked$ is reset to contain all FALSE entries (so the algorithm doesn't exit early). Next, $checked[u]$ is set to TRUE, and the algorithm then moves to a nested loop. In *that* loop, each $(u, v)$ in $E$ is considred, and a floating point decimal $rate$ is initialized each time to $weight(u, v)$. Check(u, v, rate) is then called during each iteration of the loop. The outer loop takes exactly $O(V)$ time, and the inner loop exactly $O(V-1)$ to loop through the edges. 
+
+In the worse case asymptotically, there would be no risk-free currency exchange. In this case, both of the outer and inner loops in the third chunk would run until completion. The inner loop would make exactly $(V-1)$ calls to Check(), which itself takes $O(V-1)$ time. And the outer loop would initiate the inner loop exactly $V$ times. So the algorithm's worst-case running time is $O(V \times (V-1) \times (V-1))$, which is equivalent to $O(V^{3})$. Not great. 
+
+\vspace{12pt}
+
+*proof of correctness*
+
+\vspace{12pt}
+
+Again, we can prove the correctness of this algorithm by contradiction.
+
+Assume that the algorithm either (A) identifies a false risk-free exchange rate, or (B) fails to identify a present risk-free exchange rate. 
+
+With regard to (A), the only way the algorithm outputs that it has found a risk-free exchange rate is in the case when the exchange rate along our path from the beginning currency to the one our holdings are currently in ($beginning -> c_{1} -> c_{2} -> ... -> current$), when multiplied by the exchange rate from the current currency to the one with which we began ($weight(current, beginning)$), is greater than 1. In such cases, a risk-free exchange will always - by definition - be present, and so we know (A) can never occur. 
+
+With regard to (B), this would mean the algorithm ran to completion and missed a risk-free exchange. We know, now, that the algorithm checks every path from every source (currency) that returns to that source. To do so, it steps one currency (node) at a time, always checking if it can cash out into the currency (source) with which it began. So, for (B) to be true, the algorithm checked if its current holdings could be exchanged back into its beginning currency for a profit, and, at some point, saw that it could but continued along with the algorithm anyway. This is impossible, for the algorithm would always output 'FOUND ONE!' and break in such a case. 
+
+So neither (A) nor (B) is possible, and so assuming the algorithm does not work leads to a contradiction. Thus, we've proved the algorithm correct. 
+  
+  
